@@ -1,6 +1,7 @@
 #include <kipr/wombat.h>
 #include <stdlib.h>
 #include <math.h>
+//4 cm left wheel to pole & hyp = 2 ticks off 12 cm
 //232.5 ticks per inch
 // 40/3 ticks per degree
 // 90 degrees is 1200 ticks
@@ -28,6 +29,7 @@ int middle = 910;
 int gray = 1793; 
 int count = 0;
 int pomSense = 0;
+int pom = 2450;
 
 //FUNCTIONS
 void drive(int distance, int speed);
@@ -46,121 +48,123 @@ int main()
     
     //STEP 1: get ring stand out the way
     drive_on(5000,500); // first param dont matter cuz its gonna keep going till it reaches the black line
-    drive_off(5000,500); // same case, but instead its gonna keep going till its off the black line
-    drive(349,500); // raised this number so it could be more on the left side of tape after right turn
     servo(sweeper,right,1);
-    right_turn(933,1000);
-    drive(930,-500);
+    left_turn(360,500);// turn to get perpendicular with black line 
+    drive_off(5000,500);
+    drive(465,500);
+    right_turn(1227,1000); // turn to get rings out the way
+    drive(698,-500); // back up to have time to line up w/ left side
     
     //STEP 2: pom collection and sorting
     while(count <= 8){
-        line_follow(5000,500,lineSense);
+        line_follow(2208,350,lineSense);// theres about 8.75 inches tween each pom so just in case it doesn't see
         count++;
-        printf("count = %d", count);
-        if(count ==7){ // green top
+        printf("count = %d \n", count);
+        msleep(50);
+        if(count == 7){ // green top
             servo(grabber,close,2);
-            servo(sweeper,left,2);
+            servo(sweeper,left,1);
             servo(grabber,open,2);
         }
         if(count == 8){ // red top
             servo(grabber,close,2);
-            servo(sweeper,right,2);
+            servo(sweeper,right,1);
             servo(grabber,open,2);
         }
-        if(count%2 > 0 && count < 7){ // red
-            servo(sweeper,left,2);
+        if(count%2 > 0 && count < 7){ // red is odd #
+            servo(sweeper,left,1);
         }
-        if(count%2 == 0 && count < 7){ // green
-            servo(sweeper,right,2);
+        if(count%2 == 0 && count < 7){ // green is even #
+            servo(sweeper,right,1);
         }
+        msleep(50);
     }
-    
-     
-
 
     ao();
     disable_servos();
     return 0;
 }
-void drive(int distance, int speed){
-    cmpc(0);
-    while(abs(gmpc(0)) < distance){
-        mav(0,speed);
-        mav(1,speed); 
+void drive(int distance, int speed){ // distance = # of ticks. 232.5 ticks / inch
+    cmpc(rmotor);//reset tick count
+    while(abs(gmpc(rmotor)) < distance){// while the tick count is < our tick goal...
+        mav(rmotor,speed); // 1st param: port # ; 2nd param: speed -1500 to 1500. dont exceed 1200 tho
+        mav(lmotor,speed); 
     }
-    mav(0,0);
-    mav(1,0);
+    mav(rmotor,0); // put the wheels to a stop
+    mav(lmotor,0);
     msleep(20);
 }
-void drive_b(int distance, int speed){
-    cmpc(0);
-    while(abs(gmpc(0)) < distance){
-        mav(0,speed - 150);
-        mav(1,speed); 
+void drive_b(int distance, int speed){ // put in -# for speed
+    cmpc(rmotor);
+    while(abs(gmpc(rmotor)) < distance){
+        mav(rmotor,speed - 600); // makes it drift to the left a lil bit while going back
+        mav(lmotor,speed); 
     }
-    mav(0,0);
-    mav(1,0);
+    mav(rmotor,0);
+    mav(lmotor,0);
     msleep(20);
 }
 void drive_on(int distance, int speed){
-    cmpc(0);
-    while(abs(gmpc(0)) < distance){
-        if(analog(lineSense) > 2000){
+    cmpc(rmotor);
+    while(abs(gmpc(rmotor)) < distance){
+        if(analog(lineSense) > 2000){ // stop when we get to the line
             break;
         }
-        mav(0,speed);
-        mav(1,speed); 
+        mav(rmotor,speed);
+        mav(lmotor,speed); 
     }
-    mav(0,0);
-    mav(1,0);
+    mav(rmotor,0);
+    mav(lmotor,0);
     msleep(20);
 }
 void drive_off(int distance, int speed){
-    cmpc(0);
-    while(abs(gmpc(0)) < distance){
-        if(analog(lineSense) < 1200){
+    cmpc(rmotor);
+    while(abs(gmpc(rmotor)) < distance){
+        if(analog(lineSense) < 1200){ // stop when we off the line
             break;
         }
-        mav(0,speed);
-        mav(1,speed); 
+        mav(rmotor,speed);
+        mav(lmotor,speed); 
     }
-    mav(0,0);
-    mav(1,0);
+    mav(rmotor,0);
+    mav(lmotor,0);
     msleep(20);
 }
-void right_turn(int distance, int speed){
-    cmpc(1);
-    while(gmpc(1) < distance){
-        mav(0,-speed);
-        mav(1,speed);
+void right_turn(int distance, int speed){ // 40/3 inches / degree. 
+    cmpc(lmotor);
+    while(gmpc(lmotor) < distance){
+        mav(rmotor,-speed);
+        mav(lmotor,speed);
     }
-    mav(0,0);
-    mav(1,0);
+    mav(rmotor,0);
+    mav(lmotor,0);
     msleep(20);
 }
 void left_turn(int distance, int speed){
-    cmpc(0);
-    while(gmpc(0) < distance){
-        mav(0,speed);
-        mav(1,-speed);
+    cmpc(rmotor);
+    while(gmpc(rmotor) < distance){
+        mav(rmotor,speed); 
+        mav(lmotor,-speed);
     }
-    mav(0,0);
-    mav(1,0);
+    mav(rmotor,0);
+    mav(lmotor,0);
     msleep(20);
 }
 void line_follow(int distance, int speed, int port){
-    cmpc(0);
-    while(abs(gmpc(0)) < distance){
-        if(analog(pomSense) > 2500){
+    cmpc(lmotor);
+    cmpc(rmotor);
+    while(abs(gmpc(rmotor)) < distance){
+        if(analog(pomSense) > pom){ // stop line following when pom is detected
+            printf("sensor val = %d \n",analog(pomSense));
             break;
         }
-        int error = analog(port) - gray; //error > 0 = black. error < 0 = white. this constant is calculated by (white board val + black tape val)/2
-        float speed_modifier = error * 0.025; // this constant needs adjustment. gray and white val difference. lower if change is too high. higher if change is too low. 0.02-0.1. had it at 0.025. ima change it to 0.035 to see how much it affects it
-        mav(0,speed - speed_modifier); // had this as +. ima change it to - to see how it affects the line follow
-        mav(1, speed + speed_modifier);// had this as -. ima change it to + to see how it affects the line follow
+        int error = analog(port) - gray; //error > 0 = black. error < 0 = white. gray is calculated by (white board val + black tape val)/2
+        float speed_modifier = error * 0.025; // this constant needs adjustment. gray and white val difference. lower if change is too high. higher if change is too low. 0.02-0.1.
+        mav(rmotor,speed + speed_modifier); 
+        mav(lmotor, speed - speed_modifier);
     }
-    mav(0,0);
-    mav(1,0);
+    mav(rmotor,0);
+    mav(lmotor,0);
     msleep(20);
 }
 void servo(int port, int position, float speed){ // speed is based off time so it's more consistent.
