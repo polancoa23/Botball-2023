@@ -3,14 +3,12 @@
 #include <math.h>
 // 3/31 THINGS I CHANGED: increased the speed of the line follow(450 & 0.05) and anytime it goes forward and back
 //when u turn left, sweeper should be left and same case w/ right
-//4 cm left wheel to pole & hyp = 2 ticks off 12 cm
 //232.5 ticks per inch
 // 40/3 ticks per degree
-// 90 degrees is 1200 ticks
 // sweeper should be on right side before it runs into red 
 // sweeper should be on left side before it runs into green
 // sweeper moves to the left when it sorts red
-//sweeper moves to the right when it sorts green
+// sweeper moves to the right when it sorts green
 // 6 normal
 // 2 stacked
 //white = 1170
@@ -21,15 +19,19 @@
 //VARIABLES
 int lmotor = 1;
 int rmotor = 0;
+int gmotor = 3;
 int sweeper = 0;
 int grabber = 1;
 int lineSense = 1;
 int sideSense = 2;
 int close = 200;
-int open = 1100;
+int open = 770;
+int lilOpen = 450;
 int left = 420;
 int right = 1490;
-int middle = 910;
+int middle = 1000;
+int midLeft = 550;
+int midRight = 1250;
 int gray = 2700; 
 int black = 3300;
 int black1 = 4000;
@@ -38,7 +40,9 @@ int white1 = 3950;
 int count = 0;
 int pomSense = 0;
 int pom = 2650;
-int lspeed = 788;
+int lspeed = 900;
+float sweepTimeR = 0.3;
+float sweepTimeL = 0.3;
 
 //FUNCTIONS
 void drive(int distance, int speed);
@@ -52,6 +56,9 @@ void left_turn(int distance, int speed);
 void line_follow(int distance, int speed, int port);
 void servo(int port, int position, float speed);
 void shimmy();
+void drop();
+void reset_drop();
+void slight_up();
 int main()
 {
     enable_servos();
@@ -60,32 +67,22 @@ int main()
     //STEP 1: get ring stand out the way and line up PERFECT
     drive_on(5000,1200); // first param dont matter cuz its gonna keep going till it reaches the black line
     servo(sweeper,left,0.2);
-    msleep(50);
     drive_off(5000,-1200);
-    drive(116,-1200);
-    left_turn(1039,750); // turn to get perpendicular with the line
-    msleep(50);
+    drive(465,-1200);
+    msleep(100);
+    left_turn(333,750); // turn to get perpendicular with the line
+    msleep(100);
     drive_on(5000,1200);
     drive_off(5000,1200);
     drive(581,1200); //1.5 inches in front of line
     servo(sweeper,right,0.2);
     right_turn(1200,1000);// turn to line up
-
-
-    /*
-    servo(sweeper,right,0.2);
-    right_turn(800,750); // turn to get rings out the way.
-    drive_off(5000,-1200);
-    drive(116,-1200);
     servo(sweeper,left,0.2);
-    left_turn(1039,750); // turn to get perpendicular with the line
-    drive_on(5000,1200);
-    drive_off(5000,1200);
-    drive(581,1200); //1.5 inches in front of line
+    msleep(100);
+    drive(465,-1200);
+    drive(465,-1200);
     servo(sweeper,right,0.2);
-    right_turn(1200,750);// turn to line up
-    */
-
+    msleep(250);
 
     //STEP 2: pom collection and sorting
     while(count <= 8){
@@ -94,55 +91,74 @@ int main()
         printf("count = %d \n", count);
         msleep(50);
         if(count == 3){
-            //drive(105,563);
             pom = 2900;
-            //lspeed = 750;
+        }
+        if(count == 4){
+            sweepTimeL = 1;
+            sweepTimeR = 1;
         }
         if(count == 5){
-            //drive(105,750);
+            sweepTimeL = 0.5;
+            sweepTimeR = 0.5;
             pom = 2650;
-            //lspeed = 563;
         }
         if(count == 7){ // green top
             servo(grabber,close,0.2);
-            servo(sweeper,left,1);
-            msleep(50);
+            servo(sweeper,midLeft,1);
+            msleep(100);
             servo(grabber,open,0.5);
-            servo(sweeper,right,0.5);
-            servo(sweeper,left,0.5);
+            servo(sweeper,left,sweepTimeL);
+            msleep(50);
+            servo(sweeper,right,sweepTimeR);
+            msleep(50);
+            servo(sweeper,middle,sweepTimeL);
+            msleep(50);
+            left_turn(200,500);
+            msleep(50);
+            servo(sweeper,right,sweepTimeR);
+            right_turn(200,500);
+            servo(sweeper,left,sweepTimeL);
         }
         if(count == 8){ // red top
             drive(47,lspeed);
             servo(grabber,close,0.2);
-            servo(sweeper,right,1);
-            msleep(50);
+            servo(sweeper,midRight,1);
+            msleep(100);
             servo(grabber,open,0.2);
-            servo(sweeper,left,0.5);
-            servo(sweeper,right,0.5);
-            servo(grabber,close,0.2);
+            servo(sweeper,right,sweepTimeR);
+            msleep(50);
+            servo(sweeper,left,sweepTimeL);
+            //msleep(50);
+            servo(sweeper,right,sweepTimeR);
+            servo(grabber,lilOpen,0.2);
             count++;
         }
         if(count%2 > 0 && count < 7){ // red is odd #
             drive(105,lspeed);
             msleep(50);
-            servo(sweeper,left,0.5);
+            servo(sweeper,left,sweepTimeL);
+            msleep(50);
         }
         if(count%2 == 0 && count < 7){ // green is even #
             drive(105,lspeed);
             msleep(50);
-            servo(sweeper,right,0.5);
+            servo(sweeper,right,sweepTimeR);
+            msleep(50);
         }
         msleep(50);
     }
     
     //STEP 3: bringing poms to scoring areas
     //adjusting to make sure the poms inside
-    servo(sweeper,middle,0.35);
+    servo(sweeper,midLeft+200,0.35); // blabla
     right_turn(200,350);
-    drive(349,500);
+    drive(698,500);
+    servo(sweeper,right,0.35);
+    msleep(100);
+    servo(sweeper,midLeft+200,0.35);
     left_turn(200,350);
     drive(349,500);
-    servo(sweeper,right,1);
+    servo(sweeper,right,0.5);
     msleep(100);
     servo(sweeper,left,0.5);
     
@@ -178,20 +194,24 @@ int main()
     drive_off(5000,-1200); 
     drive(465,-1200);  
     msleep(100);
-    right_turn(1133,750);  
+    right_turn(1133,500);  
 
     //getting past the middle black line
     msleep(100);
     drive_on(5000,1200);
     drive_off(5000,1200);
+    right_turn(67,500);
     
     // drive till the middle of the big sorting area and turning 90
     drive(3952,1200); 
     left_turn(1133,750); 
     servo(sweeper,right,0.5);
+    servo(grabber,close,0.5);
 
     // drop off poms and getting out the box
-    drive(1861,1200);  //forward a bit
+    drive_on(1395,1200);
+    drive_off(930,1200);
+    drive(1396,1200);  //forward a bit
     shimmy(); //forward and back shimmy till black line
     drive_off(5000,-1200);  // drive off
     drive(698,-1200);  // drive another 1.5 in
@@ -303,11 +323,11 @@ void line_follow(int distance, int speed, int port){
             break;
         }
         int error = analog(port) - gray; //error > 0 = black. error < 0 = white. gray is calculated by (white board val + black tape val)/2
-        float speed_modifier = error * 0.0876; // this constant needs adjustment. gray and white val difference. lower if change is too high. higher if change is too low. 0.02-0.1.
+        float speed_modifier = error * 0.1; // this constant needs adjustment. gray and white val difference. lower if change is too high. higher if change is too low. 0.02-0.1.
         while(analog(lineSense) < 2000){
             printf("sensor val = %d \n",analog(lineSense));
             mav(rmotor,0); 
-            mav(lmotor,speed);
+            mav(lmotor,speed*1.5);
         }
         mav(rmotor,speed + speed_modifier); 
         mav(lmotor, speed - speed_modifier);
@@ -339,10 +359,31 @@ void shimmy(){
         drive(523,900);
         i++;
     }
-    if(i==3 && analog(lineSense) > black){
-	    break;
+    if(i==3 && analog(lineSense) < black){
+	    drive_on(5000,-1200);
     }
-    drive_on(5000,-1200);
-    
 }
-//easings.net shows how to create different functions to implement into servos. easeInOutCubic is nice to speed up and slow down.
+void drop(){
+  cmpc(gmotor);
+  while(abs(gmpc(gmotor)) < 698){// while the tick count is < our tick goal... MIGHT HAVE TO CHANGE THE #
+        mav(gmotor,300); // 1st param: port # ; 2nd param: speed -1500 to 1500. dont exceed 1200 tho
+  }
+  mav(gmotor,0); // put the wheels to a stop
+  
+}
+void reset_drop(){
+  cmpc(gmotor);
+  while(abs(gmpc(gmotor)) < 698){// while the tick count is < our tick goal... MIGHT HAVE TO CHANGE THE #
+        mav(gmotor,-300); // 1st param: port # ; 2nd param: speed -1500 to 1500. dont exceed 1200 tho
+  }
+  mav(gmotor,0); // put the wheels to a stop
+  
+}
+void slight_up(){
+  cmpc(gmotor);
+  while(abs(gmpc(gmotor)) < 698){// while the tick count is < our tick goal... MIGHT HAVE TO CHANGE THE #
+        mav(gmotor,300); // 1st param: port # ; 2nd param: speed -1500 to 1500. dont exceed 1200 tho
+  }
+  mav(gmotor,0); // put the wheels to a stop
+}   
+//easings.net shows how to create different functions to implement into servos. easeInOutCubic is nice to speed up and slow down. 
