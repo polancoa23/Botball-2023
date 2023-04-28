@@ -46,13 +46,10 @@ int halfRing = -510;
 int regPos = 0;
 //FUNCTIONS
 void drive(int distance, int speed);
-void drive_b(int distance, int speed);
 void drive_on(int distance, int speed);
 void drive_on_side(int distance, int speed);
-void drive_on_pole(int distance, int speed);
 void drive_off(int distance, int speed);
 void drive_off_side(int distance, int speed);
-void drive_off_pole(int distance, int speed);
 void right_turn(int distance, int speed);
 void left_turn(int distance, int speed);
 void line_follow(int distance, int speed, int port);
@@ -240,8 +237,8 @@ int main()
     right_turn(33,750);
     
     // drive till the middle of the big sorting area and turning 90
-    drive(2258,1000); 
-    left_turn(1133,1000); 
+    drive(2722,1000); 
+    left_turn(1167,1000); 
     servo(sweeper,midRight,0.4);
     //servo(grabber,close,0.2);
 
@@ -322,16 +319,6 @@ void drive(int distance, int speed){ // distance = # of ticks. 232.5 ticks / inc
     mav(lmotor,0);
     msleep(20);
 }
-void drive_b(int distance, int speed){ // put in -# for speed
-    cmpc(rmotor);
-    while(abs(gmpc(rmotor)) < distance){
-        mav(rmotor,speed - 600); // makes it drift to the left a lil bit while going back
-        mav(lmotor,speed); 
-    }
-    mav(rmotor,0);
-    mav(lmotor,0);
-    msleep(20);
-}
 void drive_on(int distance, int speed){
     cmpc(rmotor);
     while(abs(gmpc(rmotor)) < distance){
@@ -349,19 +336,6 @@ void drive_on_side(int distance, int speed){
     cmpc(rmotor);
     while(abs(gmpc(rmotor)) < distance){
         if(analog(sideSense) > black1){ // stop when we get to the line
-            break;
-        }
-        mav(rmotor,speed);
-        mav(lmotor,speed); 
-    }
-    mav(rmotor,0);
-    mav(lmotor,0);
-    msleep(20);
-}
-void drive_on_pole(int distance, int speed){
-    cmpc(rmotor);
-    while(abs(gmpc(rmotor)) < distance){
-        if(analog(poleSense) > pole){ // stop when we get to the line
             break;
         }
         mav(rmotor,speed);
@@ -397,19 +371,6 @@ void drive_off_side(int distance, int speed){
     mav(lmotor,0);
     msleep(20);
 }
-void drive_off_pole(int distance, int speed){
-    cmpc(rmotor);
-    while(abs(gmpc(rmotor)) < distance){
-        if(analog(poleSense) < pole){ // stop when we get to the line
-            break;
-        }
-        mav(rmotor,speed);
-        mav(lmotor,speed); 
-    }
-    mav(rmotor,0);
-    mav(lmotor,0);
-    msleep(20);
-}
 void right_turn(int distance, int speed){ // 40/3 inches / degree. 
     cmpc(lmotor);
     while(gmpc(lmotor) < distance){
@@ -435,12 +396,12 @@ void line_follow(int distance, int speed, int port){
     cmpc(rmotor);
     while(abs(gmpc(rmotor)) < distance){
         if(analog(pomSense) > pom){ // stop line following when pom is detected
-            printf("sensor val = %d \n",analog(pomSense));
+            printf("pom sensor val = %d \n",analog(pomSense));
             break;
         }
         int error = analog(port) - gray; //error > 0 = black. error < 0 = white. gray is calculated by (white board val + black tape val)/2
         float speed_modifier = error * 0.076; // this constant needs adjustment. gray and white val difference. lower if change is too high. higher if change is too low. 0.02-0.1.
-        while(analog(lineSense) < 2450){
+        while(analog(lineSense) < 2550){
             printf("line sensor val = %d \n",analog(lineSense));
             mav(rmotor,speed - speed_modifier); 
             mav(lmotor,speed + speed_modifier);
@@ -514,4 +475,3 @@ void reset_puller(){
     off(gmotor);
     msleep(100);
 }
-//easings.net shows how to create different functions to implement into servos. easeInOutCubic is nice to speed up and slow down. 
