@@ -5,16 +5,8 @@
 //when u turn left, sweeper should be left and same case w/ right
 //232.5 ticks per inch
 // 40/3 ticks per degree
-// sweeper should be on right side before it runs into red 
-// sweeper should be on left side before it runs into green
 // sweeper moves to the left when it sorts red
 // sweeper moves to the right when it sorts green
-// 6 normal
-// 2 stacked
-//white = 1170
-//black = 2415
-//distance: 1) white: 2160 2)1980 3) red: 2540 4) green: 2510 5) green top: 2900 6) red top: 2900
-//black:1825, 2468,2470,2440
 
 //VARIABLES
 int lmotor = 1;
@@ -34,7 +26,7 @@ int right = 1490;
 int middle = 950;
 int midLeft = 500;
 int midRight = 1250;
-int gray = 2700; 
+int gray = 2750; 
 int black = 3300;
 int black1 = 4000;
 int white = 2000;
@@ -45,35 +37,27 @@ int pom = 2650;
 int lspeed = 1000;
 float sweepTimeR = 0.3;
 float sweepTimeL = 0.3;
-int firstRing = -975;
-int secondRing = -885;
-int thirdRing = -795;
+int firstRing = -965;
+int secondRing = -875;
+int thirdRing = -785;
 int halfRing = -460;
-//1st:-975
-    //2nd: -885
-    //3rd: -795
+int halfThird = abs(thirdRing) + halfRing;
+int halfSecond = abs(secondRing) + halfRing;
+int halfFirst = abs(firstRing) + halfRing;
 int regPos = 0;
-int pole = 1000; //GOTTA FIND THIS WHEN WE GET BACK TUESDAY
 //FUNCTIONS
 void drive(int distance, int speed);
-void drive_b(int distance, int speed);
 void drive_on(int distance, int speed);
 void drive_on_side(int distance, int speed);
-void drive_on_pole(int distance, int speed);
 void drive_off(int distance, int speed);
 void drive_off_side(int distance, int speed);
-void drive_off_pole(int distance, int speed);
 void right_turn(int distance, int speed);
 void left_turn(int distance, int speed);
 void line_follow(int distance, int speed, int port);
 void servo(int port, int position, float speed);
 void shimmy();
-void drop_1();
-void drop_2();
-void drop_3();
-void drop_3_pt_2();
-void half_drop();
-void reset_puller();
+void drop(int speed, int diff, int diff_2);
+
 int main()
 {
     enable_servos();
@@ -90,7 +74,7 @@ int main()
     msleep(100);
     drive_on(5000,1200);
     drive_off(5000,1200);
-    drive(349,1200); //1.5 inches in front of line
+    drive(407,1200); //1.75 inches in front of line
     servo(sweeper,right,0.2);
     right_turn(1200,1000);// turn to line up
     servo(sweeper,left,0.2);
@@ -103,7 +87,7 @@ int main()
 
     //STEP 2: pom collection and sorting
     while(count <= 8){
-        line_follow(1918,lspeed,lineSense);// theres about 8.75 inches tween each pom so just in case it doesn't see
+        line_follow(1918,lspeed,lineSense);// theres about 8 inches tween each pom so just in case it doesn't see, we go 8.25
         count++;
         printf("count = %d \n", count);
         msleep(50);
@@ -130,10 +114,10 @@ int main()
             msleep(50);
             servo(sweeper,middle,sweepTimeL);
             msleep(50);
-            left_turn(200,500);
+            left_turn(200,1000);
             msleep(50);
             servo(sweeper,right,sweepTimeR);
-            right_turn(200,500);
+            right_turn(200,1000);
             servo(sweeper,left,sweepTimeL);
         }
         if(count == 8){ // red top
@@ -168,13 +152,13 @@ int main()
     //STEP 3: bringing poms to scoring areas
     //adjusting to make sure the poms inside
     servo(sweeper,midLeft+200,0.35); // blabla
-    right_turn(200,350);
-    drive(698,500);
+    right_turn(200,1000);
+    drive(698,750);
     servo(sweeper,right,0.35);
     msleep(100);
     servo(sweeper,midLeft+200,0.35);
-    left_turn(200,350);
-    drive(349,500);
+    left_turn(200,1000);
+    drive(349,750);
     servo(sweeper,right,0.4);
     msleep(100);
     servo(sweeper,left,0.4);
@@ -193,10 +177,10 @@ int main()
     
     //forward till side of sorting area and then 5 more inches to get in pos for turn
     drive_on_side(5000,1000);
-    drive_off_side(5000,1000);
-    right_turn(33,750);
-    drive(1464,750);
     left_turn(33,750);
+    drive_off_side(5000,1000);
+    drive(1464,750);
+    left_turn(14,750);
     drive(279,750);
     msleep(100);
     servo(sweeper,right,0.4);
@@ -232,25 +216,9 @@ int main()
     //getting 4th ring
     drive(3489,-1200); 
     msleep(100);
-    drop_3();
-    /*
-    while(gmpc(gmotor) > thirdRing+10){
-        drop_3();
-    }
-    msleep(100);
-    drive(1163,1200);
-    msleep(100);
-    half_drop();
-    while(gmpc(gmotor) > halfRing+10){
-        half_drop();
-    }
-    msleep(100);  
-    reset_puller();
-    while(gmpc(gmotor) < regPos-10){
-        reset_puller();
-    }
-    msleep(100);
-    */
+    drop(750,thirdRing,halfThird); //void drop(int speed, int diff, int diff_2)
+    
+
 
     //getting past the middle black line
     right_turn(1133,750);
@@ -278,49 +246,18 @@ int main()
     //STEP 4: getting the rest of the multipliers 
     //getting 3rd multiplier
     msleep(100);
-    drop_3_pt_2();
-    /*
-    while(gmpc(gmotor) > thirdRing+10){
-        drop_3();
-    }
-    msleep(100);
-    drive(1163,1200);
-    msleep(100);
-    half_drop();
-    while(gmpc(gmotor) > halfRing+10){
-        half_drop();
-    }
-    msleep(100);
-    */
+    drop(750,-halfThird,halfThird);  //void drop(int speed, int diff, int diff_2)
+    
 
     //turning and getting to the 2nd multiplier 
     right_turn(1133,1200);
-    /*
-    while(gmpc(gmotor) < regPos-10){
-        reset_puller();
-    }
-    msleep(100);
-    */
     drive(3603,1200);
 
     //turning and getting 2nd multiplier
     left_turn(1133,1200);
     drive(1860,-1200);
     msleep(100);
-    drop_2();
-    /*
-    while(gmpc(gmotor) > secondRing+10){
-        drop_2();
-    }
-    msleep(100);
-    drive(1163,1200);
-    msleep(100);
-    half_drop();
-    while(gmpc(gmotor) > halfRing+10){
-        half_drop();
-    }
-    msleep(100);
-    */
+    drop(750,-halfSecond,halfSecond); //void drop(int speed, int diff, int diff_2)
   
     //turning and getting to the 1st multiplier
     left_turn(1133,1200);
@@ -330,14 +267,8 @@ int main()
     right_turn(1133,1200);
     drive(1860,-1200);
     msleep(100);
-    drop_1();
-    /*
-    while(gmpc(gmotor) > firstRing+10){
-        drop_1();
-    }
-    msleep(100);
-    drive(1163,1200);
-    */
+    drop(750,-halfFirst,-firstRing); //void drop(int speed, int diff, int diff_2)
+   
     ao();
     disable_servos();
     return 0;
@@ -349,16 +280,6 @@ void drive(int distance, int speed){ // distance = # of ticks. 232.5 ticks / inc
         mav(lmotor,speed); 
     }
     mav(rmotor,0); // put the wheels to a stop
-    mav(lmotor,0);
-    msleep(20);
-}
-void drive_b(int distance, int speed){ // put in -# for speed
-    cmpc(rmotor);
-    while(abs(gmpc(rmotor)) < distance){
-        mav(rmotor,speed - 600); // makes it drift to the left a lil bit while going back
-        mav(lmotor,speed); 
-    }
-    mav(rmotor,0);
     mav(lmotor,0);
     msleep(20);
 }
@@ -388,19 +309,6 @@ void drive_on_side(int distance, int speed){
     mav(lmotor,0);
     msleep(20);
 }
-void drive_on_pole(int distance, int speed){
-    cmpc(rmotor);
-    while(abs(gmpc(rmotor)) < distance){
-        if(analog(poleSense) > pole){ // stop when we get to the line
-            break;
-        }
-        mav(rmotor,speed);
-        mav(lmotor,speed); 
-    }
-    mav(rmotor,0);
-    mav(lmotor,0);
-    msleep(20);
-}
 void drive_off(int distance, int speed){
     cmpc(rmotor);
     while(abs(gmpc(rmotor)) < distance){
@@ -418,19 +326,6 @@ void drive_off_side(int distance, int speed){
     cmpc(rmotor);
     while(abs(gmpc(rmotor)) < distance){
         if(analog(sideSense) < white1){ // stop when we off the line
-            break;
-        }
-        mav(rmotor,speed);
-        mav(lmotor,speed); 
-    }
-    mav(rmotor,0);
-    mav(lmotor,0);
-    msleep(20);
-}
-void drive_off_pole(int distance, int speed){
-    cmpc(rmotor);
-    while(abs(gmpc(rmotor)) < distance){
-        if(analog(poleSense) < pole){ // stop when we get to the line
             break;
         }
         mav(rmotor,speed);
@@ -475,6 +370,13 @@ void line_follow(int distance, int speed, int port){
             mav(rmotor,0); 
             mav(lmotor,speed*1.5);
         }
+        /*
+        while(analog(lineSense) < 2250){
+            printf("line sensor val = %d \n",analog(lineSense));
+            mav(rmotor,speed - speed_modifier); 
+            mav(lmotor,speed + speed_modifier);
+        }
+        */
         printf("line val = %d \n",analog(lineSense));
         mav(rmotor,speed + speed_modifier); 
         mav(lmotor, speed - speed_modifier);
@@ -505,99 +407,24 @@ void shimmy(){
     servo(grabber,close,0.2);
 	drive_on(5000,-1200);
 }
-void drop_1(){
+void drop(int speed, int diff, int diff_2){ //1st diff neg, 2nd diff pos
     printf("puller val = %d \n",gmpc(gmotor));
     cmpc(gmotor);
-    mrp(gmotor,500,-515);
-    bmd(gmotor);
+    mrp(gmotor,speed,diff);
+    while(get_motor_done(gmotor) == 0){
+	bmd(gmotor);
+    }
     msleep(50);
     mav(gmotor,0);
     msleep(100);
     drive(1163,1200);
     msleep(100);
-    mrp(gmotor,500,975);
-    bmd(gmotor);
-    msleep(50);
-    mav(gmotor,0);
-    cmpc(gmotor);
-    while(gmpc(gmotor)>0){
-        cmpc(gmotor);
+    mrp(gmotor,speed,diff_2);
+    while(get_motor_done(gmotor) == 0){
+	bmd(gmotor);
     }
-    msleep(20);
-}
-void drop_2(){
-    printf("puller val = %d \n",gmpc(gmotor));
-    cmpc(gmotor);
-    while(gmpc(gmotor)>0){
-        cmpc(gmotor);
-    }
-    mrp(gmotor,500,-425);
-    bmd(gmotor);
-    msleep(50);
-    mav(gmotor,0);
-    msleep(100);
-    drive(1163,1200);
-    msleep(100);
-    mrp(gmotor,500,425);
-    //bmd(gmotor);
-    //msleep(50);
     mav(gmotor,0);
     msleep(20);
 }
-void drop_3(){
-    printf("puller val = %d \n",gmpc(gmotor));
-    cmpc(gmotor);
-    while(gmpc(gmotor)>0){
-        cmpc(gmotor);
-    }
-    mrp(gmotor,500,thirdRing);
-    bmd(gmotor);
-    msleep(50);
-    mav(gmotor,0);
-    msleep(100);
-    drive(1163,1200);
-    msleep(100);
-    mrp(gmotor,500,335);
-    //bmd(gmotor);
-    //msleep(50);
-    mav(gmotor,0);
-    msleep(20);
-}
-void drop_3_pt_2(){
-    printf("puller val = %d \n",gmpc(gmotor));
-    cmpc(gmotor);
-    while(gmpc(gmotor)>0){
-        cmpc(gmotor);
-    }
-    mrp(gmotor,500,-335);
-    bmd(gmotor);
-    msleep(50);
-    mav(gmotor,0);
-    msleep(100);
-    drive(1163,1200);
-    msleep(100);
-    mrp(gmotor,500,335);
-    //bmd(gmotor);
-    //msleep(50);
-    mav(gmotor,0);
-    msleep(20);
-}
-void half_drop(){
-    printf("puller val = %d \n",gmpc(gmotor));
-    mtp(gmotor,500,halfRing);
-    bmd(gmotor);
-    msleep(50);
-    off(gmotor);
-    msleep(100);
-}
-void reset_puller(){
-    printf("puller val = %d \n",gmpc(gmotor));
-    mtp(gmotor,750,regPos);
-    bmd(gmotor);
-    mav(gmotor,0);
-    cmpc(gmotor);
-    msleep(20);
-    off(gmotor);
-    msleep(100);
-}
+
 //easings.net shows how to create different functions to implement into servos. easeInOutCubic is nice to speed up and slow down.  
