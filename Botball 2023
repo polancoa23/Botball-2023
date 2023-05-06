@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 // 3/31 THINGS I CHANGED: increased the speed of the line follow(450 & 0.05) and anytime it goes forward and back
-//when u turn left, sweeper should be left and same case w/ right
 //232.5 ticks per inch
 // 40/3 ticks per degree
 // sweeper moves to the left when it sorts red
@@ -41,35 +40,34 @@ int firstRing = -965;
 int secondRing = -875;
 int thirdRing = -785;
 int halfRing = -460;
-int halfThird = abs(thirdRing) + halfRing;
-int halfSecond = abs(secondRing) + halfRing;
-int halfFirst = abs(firstRing) + halfRing;
 int regPos = 0;
+int puller_touch = 0;
 //FUNCTIONS
 void drive(int distance, int speed);
 void drive_on(int distance, int speed);
 void drive_on_side(int distance, int speed);
+void drive_on_touch(int speed);
 void drive_off(int distance, int speed);
 void drive_off_side(int distance, int speed);
 void right_turn(int distance, int speed);
 void left_turn(int distance, int speed);
 void line_follow(int distance, int speed, int port);
 void servo(int port, int position, float speed);
-void shimmy();
-void drop(int speed, int diff, int diff_2);
+void shimmy(int speed);
+void drop(int speed, int diff);
 
 int main()
 {
     enable_servos();
     shut_down_in(120.0);
-    
     // start w/ sweeper in the middle and the robot at an angle so it could get the green and red pom all at once
     //STEP 1: get ring stand out the way and line up PERFECT
     drive_on(5000,1200); // first param dont matter cuz its gonna keep going till it reaches the black line
-    servo(sweeper,left,0.2);
+    servo(sweeper,right,0.2);
     drive_off(5000,-1200);
     drive(698,-1200);
     msleep(100);
+    servo(sweeper,left,0.2);
     left_turn(333,750); // turn to get perpendicular with the line
     msleep(100);
     drive_on(5000,1200);
@@ -177,10 +175,10 @@ int main()
     
     //forward till side of sorting area and then 5 more inches to get in pos for turn
     drive_on_side(5000,1000);
-    left_turn(33,750);
     drive_off_side(5000,1000);
+    right_turn(33,750);
     drive(1464,750);
-    left_turn(14,750);
+    left_turn(20,750);
     drive(279,750);
     msleep(100);
     servo(sweeper,right,0.4);
@@ -210,15 +208,21 @@ int main()
     //servo(grabber,close,0.5);
 
     //shimmy, getting out the box, and turning
-    shimmy(); 
-    drive_off(5000,-1200); 
-    //right_turn(33,500);
-    //getting 4th ring
-    drive(3489,-1200); 
+    servo(sweeper,right,0.4);
     msleep(100);
-    drop(750,thirdRing,halfThird); //void drop(int speed, int diff, int diff_2)
+    left_turn(200,750);
+    right_turn(200,750);
+    servo(sweeper,left,0.4);
+    msleep(100);
+    shimmy(750); 
+    drive_off(5000,-1200); 
+    //right_turn(107,500);
     
-
+    //getting 4th multipier
+    drive(3489,-1000); 
+    msleep(100);
+    drop(750,thirdRing);
+    drive_on_touch(750);
 
     //getting past the middle black line
     right_turn(1133,750);
@@ -228,7 +232,7 @@ int main()
     right_turn(33,750);
     
     // drive till the middle of the big sorting area and turning 90
-    drive(2142,1000); 
+    drive(2208,1000); //9.5 in
     left_turn(1133,1000); 
     servo(sweeper,midRight,0.4);
     //servo(grabber,close,0.2);
@@ -237,37 +241,42 @@ int main()
     drive_on(2500,1200);
     drive_off(930,1200);
     drive(1047,1200);  //forward a bit
-    shimmy(); //forward and back shimmy till black line
+    shimmy(750); //forward and back shimmy till black line
     servo(sweeper,middle,0.2);
     drive_off(5000,-1200);  // drive off
-    left_turn(33,750);
-    drive(3489,-1200);  // drive another 1.5 in
+    //left_turn(33,750);
+    drive(3489,-1000);  
     
     //STEP 4: getting the rest of the multipliers 
     //getting 3rd multiplier
     msleep(100);
-    drop(750,-halfThird,halfThird);  //void drop(int speed, int diff, int diff_2)
+    drop(750,thirdRing);
+    drive_on_touch(750);
     
-
     //turning and getting to the 2nd multiplier 
-    right_turn(1133,1200);
-    drive(3603,1200);
+    right_turn(1133,1000);
+    drive(3604,1000);//15.5 in
 
     //turning and getting 2nd multiplier
     left_turn(1133,1200);
     drive(1860,-1200);
     msleep(100);
-    drop(750,-halfSecond,halfSecond); //void drop(int speed, int diff, int diff_2)
+    drop(750,secondRing);
+    drive_on_touch(750);
   
     //turning and getting to the 1st multiplier
-    left_turn(1133,1200);
-    drive(3208,-1200);
+    left_turn(1133,1000);
+    drive(3255,-1000);//14 in
     
     //turning and getting 1st multiplier
-    right_turn(1133,1200);
+    right_turn(1133,1000);
     drive(1860,-1200);
+    left_turn(33,1000);
+    drive(233,1200);
+    right_turn(46,1000);
+    drive(465,-1200);
     msleep(100);
-    drop(750,-halfFirst,-firstRing); //void drop(int speed, int diff, int diff_2)
+    drop(750,firstRing);
    
     ao();
     disable_servos();
@@ -396,34 +405,45 @@ void servo(int port, int position, float speed){ // speed is based off time so i
     set_servo_position(port,position);
     msleep(50);
 }
-void shimmy(){
-    servo(grabber,lilOpen,0.2);
-    right_turn(200,750);
-    left_turn(400,750);
-    right_turn(400,750);
-    left_turn(400,750);
-    right_turn(200,750);
-    //drive(175,900);
+void shimmy(int speed){
+    servo(grabber,lilOpen,1);
+    right_turn(200,speed);
+    left_turn(400,speed);
+    right_turn(400,speed);
+    left_turn(400,speed);
+    right_turn(267,speed);
     servo(grabber,close,0.2);
-	drive_on(5000,-1200);
+    drive_on(5000,-1200);
 }
-void drop(int speed, int diff, int diff_2){ //1st diff neg, 2nd diff pos
+void drop(int speed, int diff){ //1st diff neg, 2nd diff pos
     printf("puller val = %d \n",gmpc(gmotor));
     cmpc(gmotor);
     mrp(gmotor,speed,diff);
+    bmd(gmotor);
     while(get_motor_done(gmotor) == 0){
-	bmd(gmotor);
+        bmd(gmotor);
+    }
+    if(digital(puller_touch) == 1 || abs(gmpc(gmotor)) < abs(diff) - 300){
+        printf("puller val = %d \n",gmpc(gmotor));
+        printf("puller still touching sensor/didn't move back enough, run it back");
+        mrp(gmotor,speed,diff);
+        bmd(gmotor);
+        while(get_motor_done(gmotor) == 0){
+            bmd(gmotor);
+        } 
     }
     msleep(50);
     mav(gmotor,0);
     msleep(100);
     drive(1163,1200);
-    msleep(100);
-    mrp(gmotor,speed,diff_2);
-    while(get_motor_done(gmotor) == 0){
-	bmd(gmotor);
+    msleep(20);
+}
+void drive_on_touch(int speed){
+    while(digital(puller_touch) == 0){
+        mav(gmotor,speed);
     }
     mav(gmotor,0);
+    cmpc(gmotor);
     msleep(20);
 }
 
