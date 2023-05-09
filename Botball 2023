@@ -212,11 +212,13 @@ int main()
     msleep(100);
     left_turn(200,750);
     right_turn(200,750);
+    left_turn(200,750);
+    right_turn(200,750);
     servo(sweeper,left,0.4);
     msleep(100);
     shimmy(750); 
     drive_off(5000,-1200); 
-    //right_turn(107,500);
+    left_turn(33,500);
     
     //getting 4th multipier
     drive(3489,-1000); 
@@ -233,7 +235,7 @@ int main()
     
     // drive till the middle of the big sorting area and turning 90
     drive(2208,1000); //9.5 in
-    left_turn(1133,1000); 
+    left_turn(1167,1000); 
     servo(sweeper,midRight,0.4);
     //servo(grabber,close,0.2);
 
@@ -244,7 +246,7 @@ int main()
     shimmy(750); //forward and back shimmy till black line
     servo(sweeper,middle,0.2);
     drive_off(5000,-1200);  // drive off
-    //left_turn(33,750);
+    left_turn(33,750);
     drive(3489,-1000);  
     
     //STEP 4: getting the rest of the multipliers 
@@ -271,9 +273,8 @@ int main()
     //turning and getting 1st multiplier
     right_turn(1133,1000);
     drive(1860,-1200);
-    left_turn(33,1000);
-    drive(233,1200);
-    right_turn(46,1000);
+    drive(465,1200);
+    left_turn(33,1200);
     drive(465,-1200);
     msleep(100);
     drop(750,firstRing);
@@ -406,14 +407,14 @@ void servo(int port, int position, float speed){ // speed is based off time so i
     msleep(50);
 }
 void shimmy(int speed){
-    servo(grabber,lilOpen,1);
+    servo(grabber,open,0.5);
     right_turn(200,speed);
     left_turn(400,speed);
     right_turn(400,speed);
     left_turn(400,speed);
     right_turn(267,speed);
-    servo(grabber,close,0.2);
     drive_on(5000,-1200);
+    servo(grabber,close,0.2);
 }
 void drop(int speed, int diff){ //1st diff neg, 2nd diff pos
     printf("puller val = %d \n",gmpc(gmotor));
