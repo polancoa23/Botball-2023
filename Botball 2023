@@ -42,6 +42,7 @@ int thirdRing = -785;
 int halfRing = -460;
 int regPos = 0;
 int puller_touch = 0;
+int adjust = 0;
 //FUNCTIONS
 void drive(int distance, int speed);
 void drive_on(int distance, int speed);
@@ -218,7 +219,7 @@ int main()
     msleep(100);
     shimmy(750); 
     drive_off(5000,-1200); 
-    left_turn(33,500);
+    right_turn(13,500);
     
     //getting 4th multipier
     drive(3489,-1000); 
@@ -240,13 +241,14 @@ int main()
     //servo(grabber,close,0.2);
 
     // drop off poms and getting out the box
+    adjust = 67;
     drive_on(2500,1200);
     drive_off(930,1200);
     drive(1047,1200);  //forward a bit
     shimmy(750); //forward and back shimmy till black line
     servo(sweeper,middle,0.2);
     drive_off(5000,-1200);  // drive off
-    left_turn(33,750);
+    left_turn(20,750);
     drive(3489,-1000);  
     
     //STEP 4: getting the rest of the multipliers 
@@ -271,11 +273,13 @@ int main()
     drive(3255,-1000);//14 in
     
     //turning and getting 1st multiplier
-    right_turn(1133,1000);
+    right_turn(933,1000);
     drive(1860,-1200);
+    /*
     drive(465,1200);
     left_turn(33,1200);
     drive(465,-1200);
+    */
     msleep(100);
     drop(750,firstRing);
    
@@ -412,7 +416,7 @@ void shimmy(int speed){
     left_turn(400,speed);
     right_turn(400,speed);
     left_turn(400,speed);
-    right_turn(267,speed);
+    right_turn(267-adjust,speed);
     drive_on(5000,-1200);
     servo(grabber,close,0.2);
 }
